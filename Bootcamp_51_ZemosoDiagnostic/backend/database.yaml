@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bc51-db-svc
+  labels:
+    app: bc51-db
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: bc51-db
+    
+  template:
+    metadata:
+      name: bc51-db
+      labels:
+        app: bc51-db
+    spec:
+      containers:
+        - name: data
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          env: 
+           - name: MYSQL_ROOT_PASSWORD
+             value: Bootcamp@51
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: bc51-db
+  labels:
+    app: bc51-db
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    app: bc51-db

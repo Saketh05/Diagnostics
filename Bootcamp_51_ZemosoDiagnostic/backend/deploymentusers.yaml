@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bc51-user-svc
+  labels:
+    app: bc51-user
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: bc51-user
+    
+  template:
+    metadata:
+      name: bc51-user
+      labels:
+        app: bc51-user
+    spec:
+      containers:
+        - name: user
+          image: ghcr.io/malyadr/users050551:latest
+          ports:
+            - containerPort: 9004
+          env: 
+           - name: DEFAULTZONE
+             value: https://diagnostic51.tk/eureka/
+           - name: SPRING_DATASOURCE_URL
+             value: jdbc:mysql://ab9cee9ce34e049768da164a2f3d4529-1295439611.us-east-2.elb.amazonaws.com:3306/zemoso_diagnostics
+           - name: SPRING_DATASOURCE_USERNAME
+             value: root
+           - name: SPRING_DATASOURCE_PASSWORD
+             value: Bootcamp@51   
+      imagePullSecrets: 
+        - name: mysecret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: bc51-user-svc
+  labels:
+    app: bc51-user
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9004
+    targetPort: 9004
+  selector:
+    app: bc51-user

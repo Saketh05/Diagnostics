@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bc51-patientservice
+  labels:
+    app: bc51-patient
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: bc51-patient
+    
+  template:
+    metadata:
+      name: bc51-patient
+      labels:
+        app: bc51-patient
+    spec:
+      containers:
+        - name: patient 
+          image: ghcr.io/malyadr/patient05051:latest
+          ports:
+            - containerPort: 9003
+          env: 
+           - name: DEFAULTZONE
+             value: https://diagnostic51.tk/eureka/
+           - name: SPRING_DATASOURCE_URL
+             value: jdbc:mysql://ab9cee9ce34e049768da164a2f3d4529-1295439611.us-east-2.elb.amazonaws.com:3306/zemoso_diagnostics
+           - name: SPRING_DATASOURCE_USERNAME
+             value: root
+           - name: SPRING_DATASOURCE_PASSWORD
+             value: Bootcamp@51   
+      imagePullSecrets: 
+        - name: mysecret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: bc51-patientservice
+  labels:
+    app: bc51-patientservice
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9003
+    targetPort: 9003
+  selector:
+    app: bc51-patient

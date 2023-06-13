@@ -1,0 +1,61 @@
+name: Github actions for Front End PR's and Pushes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+    paths:
+      - "frontend/**"
+jobs:
+  storybook:
+    name: storybook deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Install Packages
+        run: cd frontend && npm install
+      - name: Deploy  StoryBook
+        run: cd frontend && npm run chromatic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  sonar-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "./frontend/"
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install npm dependency
+        run: npm install
+      - name: Build npm project
+        run: npm run build --if-present
+
+      - name: Run tests
+        run: npm test
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: ./frontend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+          AUTH0_DOMAIN: ${{secrets.AUTH0_DOMAIN}}
+          AUTH0_CLIENT_ID: ${{secrets.AUTH0_CLIENT_ID}}
+          AUTH0_REDIRECT_URI: ${{secrets.AUTH0_REDIRECT_URI}}
+
+
+
+

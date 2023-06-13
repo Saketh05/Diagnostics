@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bc51-json
+  labels:
+    app: bc51-js
+spec:
+  replicas: 2
+  selector: 
+    matchLabels:
+      app: bc51-js
+    
+  template:
+    metadata:
+      name: bc51-js
+      labels:
+        app: bc51-js
+    spec:
+      containers:
+        - name: bc51-json
+          image: ghcr.io/sreenidhize/bc51jsonserver:123
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+      imagePullSecrets: 
+        - name: mysecret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bc51-json
+  labels:
+    app: bc51-js
+spec:
+  type: ClusterIP
+  ports:
+    - port: 4000
+      protocol: TCP
+  selector:
+    app: bc51-js
+

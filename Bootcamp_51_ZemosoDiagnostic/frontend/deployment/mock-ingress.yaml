@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bc51-ingress
+  labels:
+    name:  bc51-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+   ingressClassName: nginx
+   rules:
+   - host: postdb.gq
+     http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: bc51-json
+            port:
+              number: 4000

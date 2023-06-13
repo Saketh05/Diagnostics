@@ -1,0 +1,14 @@
+server:
+  port: 9001
+spring:
+  application:
+    name: ADDRESSES-SERVICE
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: https://diagnostic51.tk/eureka/
+  instance:
+    hostname: diagnostic51.tk

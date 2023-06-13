@@ -1,0 +1,29 @@
+{
+  "patients": [
+    {
+      "name": "Ram",
+      "relation": "Mother",
+      "dob": "2017-05-24T04:49:47.000Z",
+      "gender": "Male",
+      "id": 1
+    },
+    {
+      "name": "Joe",
+      "relation": "Son",
+      "dob": "2000-08-23T06:26:52.000Z",
+      "gender": "Male",
+      "id": 2
+    }
+  ],
+  "addresses": [
+    {
+      "houseNo": "2235 California Street  APT#021",
+      "area": "Mountain View California",
+      "zipCode": "11023",
+      "cityState": "Mountain View ,California",
+      "id": 1
+    }
+  ],
+  "saved-address": [],
+  "usersVerified": []
+}

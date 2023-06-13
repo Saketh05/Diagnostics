@@ -1,0 +1,169 @@
+name: CICD
+on:
+  push:
+    branch:
+      - main
+env:
+  GITHUB_PACKAGE_URL: https://ghcr.io
+
+  
+jobs:
+
+  addresses-service:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/addresses-service
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v2
+      - name: maven build
+        run: mvn clean install 
+      - name: building image for address
+        run: docker build . --file Dockerfile -t ghcr.io/malyadr/address050511:latest
+      - name: login to github packages
+        run: docker login ${{ env.GITHUB_PACKAGE_URL }} -u ${{ secrets.REGISTRY_USERNAMES }} --password ${{ secrets.REGISTRY_TOKENS }}
+      - name: pushing image
+        run: docker push ghcr.io/malyadr/address050511:latest
+
+  cloud-gateway:
+     runs-on: ubuntu-latest
+     defaults:
+       run:
+        working-directory: backend/cloud-gateway
+     steps:
+      - name: checkout the repo
+        uses: actions/checkout@v2
+      - name: maven build
+        run: mvn clean install 
+
+      - name: building image for api
+        run: docker build . --file Dockerfile -t ghcr.io/malyadr/cloud05051:latest
+      - name: login to github packages
+        run: docker login ${{ env.GITHUB_PACKAGE_URL }} -u ${{ secrets.REGISTRY_USERNAMES }} --password ${{ secrets.REGISTRY_TOKENS }}
+
+      - name: pushing image
+        run: docker push ghcr.io/malyadr/cloud05051:latest
+    
+  orders-service:
+    runs-on: ubuntu-latest
+    defaults:
+       run:
+         working-directory: backend/orders-service
+    steps:
+       - name: checkout the repo
+         uses: actions/checkout@v2
+       - name: maven build
+         run: mvn clean install   
+
+       - name: building image for appointment
+         run: docker build . --file Dockerfile -t ghcr.io/malyadr/orders05051:latest
+       - name: login to github packages
+         run: docker login ${{ env.GITHUB_PACKAGE_URL }} -u ${{ secrets.REGISTRY_USERNAMES }} --password ${{ secrets.REGISTRY_TOKENS }}
+
+       - name: pushing image
+         run: docker push ghcr.io/malyadr/orders05051:latest
+
+  patients-service:
+    runs-on: ubuntu-latest
+    defaults:
+       run:
+         working-directory: backend/patients-service
+    steps:
+       - name: checkout the repo
+         uses: actions/checkout@v2
+       - name: maven build
+         run: mvn clean install  
+
+       - name: building image for location-service
+         run: docker build . --file Dockerfile -t ghcr.io/malyadr/patient05051:latest
+       - name: login to github packages
+         run: docker login ${{ env.GITHUB_PACKAGE_URL }} -u ${{ secrets.REGISTRY_USERNAMES }} --password ${{ secrets.REGISTRY_TOKENS }}
+
+       - name: pushing image
+         run: docker push ghcr.io/malyadr/patient05051:latest     
+
+  service-registry:
+    runs-on: ubuntu-latest
+    defaults:
+       run:
+         working-directory: backend/service-registry
+    steps:
+       - name: checkout the repo
+         uses: actions/checkout@v2
+       - name: maven build
+         run: mvn clean install 
+
+       - name: building image for service-registry 
+         run: docker build . --file Dockerfile -t ghcr.io/malyadr/service05051:latest
+       - name: login to github packages
+         run: docker login ${{ env.GITHUB_PACKAGE_URL }} -u ${{ secrets.REGISTRY_USERNAMES }} --password ${{ secrets.REGISTRY_TOKENS }}
+
+       - name: pushing image
+         run: docker push ghcr.io/malyadr/service05051:latest
+
+  users-service:
+    runs-on: ubuntu-latest
+    defaults:
+       run:
+         working-directory: backend/users-service
+    steps:
+       - name: checkout the repo
+         uses: actions/checkout@v2
+       - name: maven build
+         run: mvn clean install
+
+       - name: building image for user-service 
+         run: docker build . --file Dockerfile -t ghcr.io/malyadr/users050551:latest
+       - name: login to github packages
+         run: docker login ${{ env.GITHUB_PACKAGE_URL }} -u ${{ secrets.REGISTRY_USERNAMES }} --password ${{ secrets.REGISTRY_TOKENS }}
+
+       - name: pushing image
+         run: docker push  ghcr.io/malyadr/users050551:latest
+
+
+  deploy:
+    name: deploy to EC2
+    runs-on: ubuntu-latest
+    defaults: 
+       run: 
+         working-directory: backend 
+    needs:
+      - addresses-service
+      - cloud-gateway
+      - orders-service
+      - patients-service 
+      - service-registry
+      - users-service          
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_IDS }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEYS }}
+          aws-region: us-east-2
+
+      - name: Connect to EKS cluster 
+        run: aws eks --region us-east-2 update-kubeconfig --name BC51-backend
+      - name: Deploy
+        uses: Consensys/kubernetes-action@master
+      - name: deploying to cluster
+        run: |
+          kubectl delete -f deploymentadress.yaml
+          kubectl delete -f deploymentcloud.yaml
+          kubectl delete -f deploymentorders.yaml
+          kubectl delete -f deploymentpatients.yaml 
+          kubectl delete -f deploymentservice.yaml
+          kubectl delete -f deploymentusers.yaml 
+          kubectl apply -f deploymentadress.yaml
+          kubectl apply -f deploymentcloud.yaml
+          kubectl apply -f deploymentorders.yaml
+          kubectl apply -f deploymentpatients.yaml 
+          kubectl apply -f deploymentservice.yaml
+          kubectl apply -f deploymentusers.yaml 
+          kubectl apply -f serviceingress.yaml
+          kubectl apply -f ingress2.yaml
+
+           

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bc51-frontend
+  labels:
+    app: bc51-fr
+spec:
+  replicas: 2
+  selector: 
+    matchLabels:
+      app: bc51-fr
+    
+  template:
+    metadata:
+      name: bc51-fr
+      labels:
+        app: bc51-fr
+    spec:
+      containers:
+        - name: bc51-frontend
+          image: ghcr.io/sreenidhize/bc51frontendserver:123
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          envFrom: 
+            - secretRef: 
+                  name: auth-secrets
+        - name: mysecret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bc51-fronted
+  labels:
+    app: bc51-fr
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      protocol: TCP
+  selector:
+    app: bc51-fr

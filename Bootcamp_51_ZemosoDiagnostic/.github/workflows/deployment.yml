@@ -1,0 +1,72 @@
+name: CICD
+on:
+  push:
+    branch:
+      - main
+env:
+  GITHUB_PACKAGE_URL: https://ghcr.io
+  
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v2
+
+      - name: building image for frontend
+        run: docker build  -t ${{ secrets.PACKAGE_URL }}/${{ secrets.REGISTRY_USERNAME }}/bc51frontendserver:${{ github.sha }} .
+      - name: login to github packages
+        run: docker login ${{ env.GITHUB_PACKAGE_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: pushing image
+        run: docker push ${{ secrets.PACKAGE_URL }}/${{ secrets.REGISTRY_USERNAME }}/bc51frontendserver:${{ github.sha }}
+  mock-server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/src
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v2
+
+      - name: building image for mockserver
+        run: docker build -t ${{ secrets.PACKAGE_URL }}/${{ secrets.REGISTRY_USERNAME }}/bc51jsonserver:${{ github.sha }} .
+      - name: login to github packages
+        run: docker login ${{ env.GITHUB_PACKAGE_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: pushing image
+        run: docker push ${{ secrets.PACKAGE_URL }}/${{ secrets.REGISTRY_USERNAME }}/bc51jsonserver:${{ github.sha }}
+
+  deploy:
+    name: deploy to eks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/deployment
+    needs: 
+    - mock-server
+    - frontend
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Connect to EKS cluster 
+        run: aws eks --region us-east-2 update-kubeconfig --name bc51
+      - name: Deploy
+        uses: Consensys/kubernetes-action@master
+      - name: deploying to cluster
+        run: |
+          kubectl set image deployment/bc51-frontend bc51-frontend=${{ secrets.PACKAGE_URL }}/${{ secrets.REGISTRY_USERNAME }}/bc51frontendserver:${{ github.sha }}
+          kubectl set image deployment/bc51-json bc51-json=${{ secrets.PACKAGE_URL }}/${{ secrets.REGISTRY_USERNAME }}/bc51jsonserver:${{ github.sha }}
+
+          

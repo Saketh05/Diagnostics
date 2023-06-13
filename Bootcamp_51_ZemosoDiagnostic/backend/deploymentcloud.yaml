@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bc51-cloudservice
+  labels:
+    app: bc51-cloud
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: bc51-cloud
+    
+  template:
+    metadata:
+      name: bc51-cloud
+      labels:
+        app: bc51-cloud
+    spec:
+      containers:
+        - name: bc51-cloudservice
+          image: ghcr.io/malyadr/cloud05051:latest
+          ports:
+            - containerPort: 9191 
+          env: 
+           - name: DEFAULTZONE
+             value: https://diagnostic51.tk/eureka/ 
+      imagePullSecrets: 
+        - name: mysecret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: bc51-cloudservice
+  labels:
+    app: bc51-cloud
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9191
+    targetPort: 9191
+  selector:
+    app: bc51-cloud

@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress1
+  annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+spec:      
+  ingressClassName: nginx
+  rules:
+  - host: cloudgateway.diagnostic51.tk
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bc51-cloudservice
+            port:
+              number: 9191 
+      - path: /address/
+        pathType: Prefix
+        backend:
+          service:
+            name: bc51-addressservice
+            port:
+              number: 9001
+      - path: /orders/
+        pathType: Prefix
+        backend:
+          service: 
+            name: bc51-orders
+            port:
+              number: 9002   
+      - path: /patients/
+        pathType: Prefix
+        backend:
+          service: 
+            name: bc51-patientservice
+            port:
+              number: 9003    
+      - path: /users/
+        pathType: Prefix
+        backend:
+          service: 
+            name: bc51-user
+            port:
+              number: 9004                               
